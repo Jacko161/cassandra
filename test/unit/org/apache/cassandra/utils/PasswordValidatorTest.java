@@ -48,6 +48,7 @@ public class PasswordValidatorTest
     public void testWhenStrongerPasswordSupplied_PasswordValidatorReturnsTrue()
     {
         //Compute a random 'Password' - UUIDs should meet the rules we outline.
+        //TODO - replace this call below with an actual strong password when we finalise on approach and rules.
         Assert.assertFalse(PasswordValidator.validatePasswordStength(UUID.randomUUID().toString()));
     }
 
