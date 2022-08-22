@@ -21,10 +21,12 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 import com.google.common.collect.ImmutableSet;
+import org.junit.Assert;
 import org.junit.Test;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.exceptions.*;
+import org.apache.cassandra.service.ClientWarn;
 import org.apache.cassandra.utils.FBUtilities;
 
 import static org.junit.Assert.assertEquals;
@@ -100,6 +102,21 @@ public class RoleOptionsTest
         {
             assertEquals("Multiple definition for property 'LOGIN'", e.getMessage());
         }
+    }
+
+    @Test
+    public void warnClientOnWeakPassword()
+    {
+        ClientWarn.instance.captureWarnings();
+        RoleOptions opts = new RoleOptions();
+        opts.setOption(IRoleManager.Option.PASSWORD, "A");
+
+        opts.validate();
+
+        List<String> warnings = ClientWarn.instance.getWarnings();
+        Assert.assertNotNull(warnings);
+        Assert.assertFalse(warnings.isEmpty());
+
     }
 
     @Test

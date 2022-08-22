@@ -24,7 +24,9 @@ import java.util.Optional;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.SyntaxException;
+import org.apache.cassandra.service.ClientWarn;
 import org.apache.cassandra.utils.FBUtilities;
+import org.apache.cassandra.utils.PasswordValidator;
 import org.mindrot.jbcrypt.BCrypt;
 
 public class RoleOptions
@@ -116,7 +118,9 @@ public class RoleOptions
      * - Ensure that only a subset of the options supported by the configured IRoleManager are set
      * - Validate the type of any option values present.
      * Should either condition fail, then InvalidRequestException is thrown. This method is called
-     * during validation of CQL statements, so the IRE results in a error response to the client.
+     * during validation of CQL statements, so the IRE results in an error response to the client.
+     * Addtionally, validate the strength of any unhashed password value, in the event of a password strength
+     * valdiation failure, warn the user that they are creating a password with a low strength.
      *
      * @throws InvalidRequestException if any options which are not supported by the configured IRoleManager
      *     are set or if any option value is of an incorrect type.
@@ -146,6 +150,10 @@ public class RoleOptions
                     if (options.containsKey(IRoleManager.Option.HASHED_PASSWORD))
                         throw new InvalidRequestException(String.format("Properties '%s' and '%s' are mutually exclusive",
                                                                         IRoleManager.Option.PASSWORD, IRoleManager.Option.HASHED_PASSWORD));
+                    if (!(PasswordValidator.validatePasswordStength((String) option.getValue())))
+                        ClientWarn.instance.warn("The provided password is of low strength, Cassandra passwords should contain " +
+                                                        "atleast 1 lower case and 1 upper case alphabetical character, " +
+                                                        "as well as one numeric.");
                     break;
                 case HASHED_PASSWORD:
                     if (!(option.getValue() instanceof String))
